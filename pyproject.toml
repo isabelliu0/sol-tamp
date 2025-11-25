@@ -29,7 +29,7 @@ develop = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 include = ["sol_tamp*"]
 
 [tool.black]

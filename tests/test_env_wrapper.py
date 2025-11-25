@@ -40,27 +40,11 @@ def test_cluttered_drawer_wrapper():
     assert isinstance(terminated, bool)
     assert isinstance(truncated, bool)
     assert "intrinsic_rewards" in info
-    print(f"intrinsic rewards on step: {info['intrinsic_rewards']}")
 
-    env.close()
-
-
-def test_intrinsic_rewards_structure():
-    tamp_system = ClutteredDrawerTAMPSystem.create_default(seed=42)
-    shortcut_signatures = [
-        (frozenset({"On(block, table)"}), frozenset({"InDrawer(block)"})),
-    ]
-
-    env = TAMPToSOLEnvironment(
-        tamp_system=tamp_system,
-        shortcut_signatures=shortcut_signatures,
-    )
-
-    obs, info = env.reset()
     intrinsic_rewards = info["intrinsic_rewards"]
-
     assert isinstance(intrinsic_rewards, dict)
     assert "shortcut_0" in intrinsic_rewards
     assert all(isinstance(v, float) for v in intrinsic_rewards.values())
+    print(f"intrinsic rewards on step: {info['intrinsic_rewards']}")
 
     env.close()

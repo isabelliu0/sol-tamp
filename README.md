@@ -18,22 +18,24 @@ For this hierarchical RL baseline,
 1. Install this package:
 
 ```bash
+# Assume we are working with uv
 git submodule update --init
-pip install -e .
+uv venv --python=3.11
+uv pip install -e .
 ```
 
 2. Install SOL dependencies (required):
 
 ```bash
-pip install -r third-party/sol/requirements.txt
-cd third-party/sol
+uv pip install -r third-party/sol/requirements.txt
+cd third-party/sol/sol
 python setup.py build_ext --inplace
 ```
 
 3. Add SOL to PYTHONPATH:
 
 ```bash
-export PYTHONPATH=/path/to/sol:$PYTHONPATH
+export PYTHONPATH=/home/airlabbw/NeSy/skill_refactor_branches/sol-tamp/third-party/sol:$PYTHONPATH
 ```
 
 ## Usage

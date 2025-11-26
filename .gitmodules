@@ -1,0 +1,3 @@
+[submodule "third-party/sol"]
+	path = third-party/sol
+	url = https://github.com/facebookresearch/sol

@@ -18,15 +18,15 @@ For this hierarchical RL baseline,
 1. Install this package:
 
 ```bash
+git submodule update --init
 pip install -e .
 ```
 
 2. Install SOL dependencies (required):
 
 ```bash
-cd /path/to/sol
-pip install -r requirements.txt
-cd sol
+pip install -r third-party/sol/requirements.txt
+cd third-party/sol
 python setup.py build_ext --inplace
 ```
 

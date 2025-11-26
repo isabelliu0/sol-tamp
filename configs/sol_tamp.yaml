@@ -1,0 +1,33 @@
+env: [
+  'tamp_cluttered_drawer',
+  'tamp_obstacle_tower',
+  'tamp_cleanup_table',
+  'tamp_obstacle2d',
+]
+
+train_for_env_steps: [10000000]
+
+with_sol: [True]
+sol_controller_reward_scale: [1.0]
+sol_num_option_steps: [-1]
+
+reward_scale_shortcuts: [1.0]
+reward_scale_skills: [1.0]
+reward_scale_task: [10.0]
+
+tamp_include_symbolic_features: [True]
+
+async_rl: [True]
+batch_size: [2048]
+rollout: [128]
+recurrence: [128]
+reward_scale: [1.0]
+normalize_input: [False]
+learning_rate: [0.0003]
+max_grad_norm: [0.5]
+value_loss_coeff: [0.5]
+num_batches_per_epoch: [2]
+num_epochs: [4]
+num_workers: [8]
+num_envs_per_worker: [4]
+with_vtrace: [True]

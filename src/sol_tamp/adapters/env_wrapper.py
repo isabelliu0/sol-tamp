@@ -51,8 +51,12 @@ class TAMPToSOLEnvironment(gym.Wrapper):
 
     def _setup_observation_space(self):
         obs_dim = self.obs_encoder.get_output_dim(self.include_symbolic_features)
-        self.observation_space = Box(
-            low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
+        self.observation_space = DictSpace(
+            {
+                "observation": Box(
+                    low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
+                )
+            }
         )
 
     def reset(
@@ -77,7 +81,7 @@ class TAMPToSOLEnvironment(gym.Wrapper):
         info["current_atoms"] = self.current_atoms
         info["goal_atoms"] = self.goal_atoms
 
-        return flat_obs, info
+        return {"observation": flat_obs}, info
 
     def step(
         self, action: NDArray[np.float32]
@@ -101,4 +105,4 @@ class TAMPToSOLEnvironment(gym.Wrapper):
         info["current_atoms"] = self.current_atoms
         info["goal_atoms"] = self.goal_atoms
 
-        return flat_obs, reward, terminated, truncated, info
+        return {"observation": flat_obs}, reward, terminated, truncated, info

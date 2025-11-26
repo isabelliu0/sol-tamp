@@ -24,7 +24,8 @@ def test_cluttered_drawer_wrapper():
     assert env.action_space is not None
 
     obs, info = env.reset()
-    assert obs.shape == env.observation_space.shape
+    assert "observation" in obs
+    assert obs["observation"].shape == env.observation_space["observation"].shape
     assert "intrinsic_rewards" in info
     assert "current_atoms" in info
     assert "goal_atoms" in info
@@ -35,7 +36,8 @@ def test_cluttered_drawer_wrapper():
     action = env.action_space.sample()
     obs, reward, terminated, truncated, info = env.step(action)
 
-    assert obs.shape == env.observation_space.shape
+    assert "observation" in obs
+    assert obs["observation"].shape == env.observation_space["observation"].shape
     assert isinstance(reward, (int, float))
     assert isinstance(terminated, bool)
     assert isinstance(truncated, bool)

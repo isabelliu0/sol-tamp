@@ -1,0 +1,42 @@
+"""Test TAMP environment registration and factory."""
+
+from unittest.mock import MagicMock
+
+from sol_tamp.tamp_envs import make_tamp_env, register_tamp_envs, TAMP_ENV_SPECS
+
+
+def test_env_specs_defined():
+    """Test that all expected environments are defined."""
+    expected_envs = ["cluttered_drawer", "obstacle_tower", "cleanup_table", "obstacle2d"]
+    for env_name in expected_envs:
+        assert env_name in TAMP_ENV_SPECS
+        assert "system_class" in TAMP_ENV_SPECS[env_name]
+        assert "shortcut_signatures" in TAMP_ENV_SPECS[env_name]
+
+
+def test_make_tamp_env_with_sol():
+    """Test creating environment with SOL wrapper."""
+    cfg = MagicMock()
+    cfg.seed = 42
+    cfg.tamp_include_symbolic_features = True
+    cfg.with_sol = True
+    cfg.reward_scale_shortcuts = 1.0
+    cfg.reward_scale_skills = 1.0
+    cfg.reward_scale_task = 10.0
+    cfg.sol_num_option_steps = 10
+
+    env = make_tamp_env("tamp_cluttered_drawer", cfg, {})
+
+    assert env is not None
+    obs, info = env.reset()
+
+    assert "observation" in obs
+    assert "current_policy" in obs
+    assert "rewards" in obs
+
+    env.close()
+
+
+def test_register_tamp_envs():
+    """Test that environment registration doesn't crash."""
+    register_tamp_envs()

@@ -1,5 +1,7 @@
 """TAMP environment registration and factory for SOL."""
 
+import pickle
+from pathlib import Path
 from typing import Optional
 
 from sample_factory.envs.env_utils import register_env
@@ -18,30 +20,67 @@ from tamp_improv.benchmarks.obstacle2d_graph import GraphObstacle2DTAMPSystem
 from sol_tamp.adapters.env_wrapper import TAMPToSOLEnvironment
 
 
+def _load_trained_signatures(system_name: str) -> list[tuple[frozenset[str], frozenset[str]]]:
+    """Load trained shortcut signatures from pickle file.
+
+    Args:
+        system_name: Name of the TAMP system (e.g., 'ClutteredDrawerTAMPSystem')
+
+    Returns:
+        List of shortcut signatures as (preconditions, effects) tuples.
+        Each signature is converted from ShortcutSignature objects to frozenset pairs
+        containing predicate names with placeholder objects.
+    """
+    signatures_path = Path("slap_data") / system_name / "trained_signatures.pkl"
+
+    if not signatures_path.exists():
+        print(
+            f"Warning: Trained signatures not found at {signatures_path}. "
+            "Using empty signature list. Run TAMP training data collection to generate signatures."
+        )
+        return []
+
+    with open(signatures_path, "rb") as f:
+        trained_sigs = pickle.load(f)
+
+    print(f"Loaded {len(trained_sigs)} trained shortcut signatures for {system_name}")
+
+    # Convert ShortcutSignature objects to (preconditions, effects) format
+    # For now, we use predicate names with generic object placeholders
+    # This allows the intrinsic reward computer to match based on predicates
+    converted_signatures = []
+    for sig in trained_sigs:
+        # Create predicate strings with placeholder objects
+        # e.g., "Holding" -> "Holding(obj)"
+        source_preds = frozenset(
+            f"{pred}(obj)" if pred not in ["GripperEmpty", "NotGripperEmpty"] else pred
+            for pred in sig.source_predicates
+        )
+        target_preds = frozenset(
+            f"{pred}(obj)" if pred not in ["GripperEmpty", "NotGripperEmpty"] else pred
+            for pred in sig.target_predicates
+        )
+        converted_signatures.append((source_preds, target_preds))
+
+    return converted_signatures
+
+
 TAMP_ENV_SPECS = {
     "cluttered_drawer": {
         "system_class": ClutteredDrawerTAMPSystem,
-        "shortcut_signatures": [
-            (frozenset(["On(block, table)"]), frozenset(["InDrawer(block)"])),
-        ],
+        "system_name": "ClutteredDrawerTAMPSystem",
     },
     "obstacle_tower": {
         "system_class": GraphObstacleTowerTAMPSystem,
-        "shortcut_signatures": [
-            (frozenset(["On(block, table)"]), frozenset(["On(block, target)"])),
-        ],
+        "system_name": "GraphObstacleTowerTAMPSystem",
     },
     "cleanup_table": {
         "system_class": CleanupTableTAMPSystem,
-        "shortcut_signatures": [
-            (frozenset(["On(toy, table)"]), frozenset(["InBin(toy)"])),
-        ],
+        "system_name": "CleanupTableTAMPSystem",
     },
     "obstacle2d": {
         "system_class": GraphObstacle2DTAMPSystem,
-        "shortcut_signatures": [
-            (frozenset(["Holding(robot, ball)"]), frozenset(["At(ball, target)"])),
-        ],
+        "system_name": "GraphObstacle2DTAMPSystem",
     },
 }
 
@@ -76,11 +115,21 @@ def make_tamp_env(
         render_mode=render_mode,
     )
 
+    # Load trained shortcut signatures from pickle files
+    shortcut_signatures = _load_trained_signatures(spec["system_name"])
+
     env = TAMPToSOLEnvironment(
         tamp_system=tamp_system,
-        shortcut_signatures=spec["shortcut_signatures"],
+        shortcut_signatures=shortcut_signatures,
         include_symbolic_features=cfg.tamp_include_symbolic_features,
     )
+
+    # Initialize skill manager by doing a temporary reset to get objects
+    # This is needed because some perceivers (e.g., GraphObstacle2D) only
+    # provide objects after reset
+    temp_obs, temp_info = env.env.reset()
+    objects, _, _ = tamp_system.perceiver.reset(temp_obs, temp_info)
+    env.skill_manager.initialize_with_objects(objects)
 
     if cfg.with_sol:
         reward_scale = {
@@ -90,7 +139,7 @@ def make_tamp_env(
         }
         base_policies = []
 
-        for i in range(len(spec["shortcut_signatures"])):
+        for i in range(len(shortcut_signatures)):
             base_policies.append(f"shortcut_{i}")
 
         all_skill_names = env.skill_manager.get_skill_names()

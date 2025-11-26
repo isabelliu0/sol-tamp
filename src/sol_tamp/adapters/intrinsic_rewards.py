@@ -54,5 +54,16 @@ class IntrinsicRewardComputer:
                 return False
         return True
 
+    def update_skill_names(self, skill_names: list[str]):
+        """Update skill names and regenerate skill reward names.
+
+        This is called after the skill manager is initialized with objects.
+
+        Args:
+            skill_names: List of unique skill type names
+        """
+        self.skill_names = skill_names
+        self.skill_reward_names = [f"skill_{name}" for name in skill_names]
+
     def get_all_reward_names(self) -> list[str]:
         return self.shortcut_reward_names + self.skill_reward_names

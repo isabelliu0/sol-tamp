@@ -64,10 +64,18 @@ class TAMPToSOLEnvironment(gym.Wrapper):
     ) -> tuple[NDArray[np.float32], dict[str, Any]]:
         obs, info = self.env.reset(seed=seed, options=options)
 
-        _, self.current_atoms, self.goal_atoms = self.tamp_system.perceiver.reset(
+        objects, self.current_atoms, self.goal_atoms = self.tamp_system.perceiver.reset(
             obs, info
         )
         self.prev_atoms = self.current_atoms.copy()
+
+        # Initialize skill manager with objects from the environment
+        self.skill_manager.initialize_with_objects(objects)
+
+        # Update reward computer with skill names now that skills are initialized
+        skill_names = [name.split("_")[0] for name in self.skill_manager.get_skill_names()]
+        unique_skill_names = list(dict.fromkeys(skill_names))
+        self.reward_computer.update_skill_names(unique_skill_names)
 
         flat_obs = self.obs_encoder.encode(
             obs,

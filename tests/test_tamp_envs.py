@@ -11,7 +11,7 @@ def test_env_specs_defined():
     for env_name in expected_envs:
         assert env_name in TAMP_ENV_SPECS
         assert "system_class" in TAMP_ENV_SPECS[env_name]
-        assert "shortcut_signatures" in TAMP_ENV_SPECS[env_name]
+        assert "system_name" in TAMP_ENV_SPECS[env_name]
 
 
 def test_make_tamp_env_with_sol():

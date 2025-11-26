@@ -38,10 +38,15 @@ class SkillOptionManager:
     def __init__(self, tamp_system):
         self.tamp_system = tamp_system
         self.skill_options: dict[str, PredefinedSkillOption] = {}
-        self._build_skill_options()
+        self._is_initialized = False
 
-    def _build_skill_options(self):
-        objects = list(self.tamp_system.components.perceiver.get_objects())
+    def _build_skill_options(self, objects):
+        """Build skill options from available objects.
+
+        Args:
+            objects: Set or list of objects from the perceiver
+        """
+        objects = list(objects)
         for lifted_operator in self.tamp_system.operators:
             groundings = self._get_valid_groundings(lifted_operator, objects)
             for grounding in groundings:
@@ -64,8 +69,22 @@ class SkillOptionManager:
             param_objects.append(matching)
         return list(product(*param_objects))
 
+    def initialize_with_objects(self, objects):
+        """Initialize skill options with objects from the environment.
+
+        This should be called after the environment is reset and objects are available.
+
+        Args:
+            objects: Set or list of objects from the perceiver
+        """
+        if not self._is_initialized:
+            self._build_skill_options(objects)
+            self._is_initialized = True
+
     def get_skill_names(self) -> list[str]:
+        """Get list of skill names. Returns empty list if not initialized."""
         return list(self.skill_options.keys())
 
     def get_skill_option(self, skill_name: str) -> PredefinedSkillOption:
+        """Get a specific skill option by name."""
         return self.skill_options[skill_name]

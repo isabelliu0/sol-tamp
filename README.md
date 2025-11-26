@@ -38,7 +38,7 @@ python setup.py build_ext --inplace
 export PYTHONPATH=/home/airlabbw/NeSy/skill_refactor_branches/sol-tamp/third-party/sol:$PYTHONPATH
 ```
 
-4. Download Shortcut Signatures from [SLAP](http://slap-data.s3-website.us-east-2.amazonaws.com/#training_data/multi_rl/)
+4. Download Shortcut Signatures from [SLAP-Shortcuts](http://slap-data.s3-website.us-east-2.amazonaws.com/#training_data/multi_rl/) and [SLAP-Policies](http://slap-data.s3-website.us-east-2.amazonaws.com/#trained_policies/multi_rl/)
 
 Desired structure
 ```
@@ -46,6 +46,8 @@ slap_data/
     CleanupTableTAMPSystem/
         config.json
         current_atoms.pkl
+        pattern_n7-to-n132_b5e0169c_0e5ec8e8.pkl
+        policy_n7-to-n132_b5e0169c_0e5ec8e8.zip
         ...
     ClutteredDrawerTAMPSystem/
 ```
@@ -57,7 +59,7 @@ Train SOL on TAMP environments using SOL's launch.py:
 
 ```bash
 cd /path/to/sol
-python launch.py --expfile /path/to/sol-tamp/configs/sol_tamp.yaml --mode local --debug
+python launch.py --expfile /home/airlabbw/NeSy/skill_refactor_branches/sol-tamp/configs/sol_tamp.yaml --mode local --debug
 ```
 
 Or directly with Sample Factory:

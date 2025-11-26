@@ -38,6 +38,19 @@ python setup.py build_ext --inplace
 export PYTHONPATH=/home/airlabbw/NeSy/skill_refactor_branches/sol-tamp/third-party/sol:$PYTHONPATH
 ```
 
+4. Download Shortcut Signatures from [SLAP](http://slap-data.s3-website.us-east-2.amazonaws.com/#training_data/multi_rl/)
+
+Desired structure
+```
+slap_data/
+    CleanupTableTAMPSystem/
+        config.json
+        current_atoms.pkl
+        ...
+    ClutteredDrawerTAMPSystem/
+```
+
+
 ## Usage
 
 Train SOL on TAMP environments using SOL's launch.py:

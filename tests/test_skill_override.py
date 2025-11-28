@@ -63,7 +63,6 @@ def test_skill_override_wrapper_integration():
     total_steps = 0
     max_steps = 20
     skill_executions = {}
-    skill_failures = {}
 
     while total_steps < max_steps:
         action = env.action_space.sample()
@@ -76,21 +75,11 @@ def test_skill_override_wrapper_integration():
         if current_policy_name in env.predefined_skills:
             if current_policy_name not in skill_executions:
                 skill_executions[current_policy_name] = 0
-                skill_failures[current_policy_name] = 0
             skill_executions[current_policy_name] += 1
 
-        try:
-            obs, reward, terminated, truncated, info = env.step(action)
-            print(f"    Reward: {reward:.3f}")
-            print(f"    Terminated: {terminated}, Truncated: {truncated}")
-        except AssertionError as e:
-            if "current_ground_operator" in str(e) or "_current_ground_operator" in str(e.__traceback__.tb_frame.f_code.co_filename):
-                print(f"    ⚠ Skill failed to initialize (preconditions not met)")
-                if current_policy_name in skill_failures:
-                    skill_failures[current_policy_name] += 1
-                raise
-            else:
-                raise
+        obs, reward, terminated, truncated, info = env.step(action)
+        print(f"    Reward: {reward:.3f}")
+        print(f"    Terminated: {terminated}, Truncated: {truncated}")
 
         total_steps += 1
 
@@ -106,8 +95,7 @@ def test_skill_override_wrapper_integration():
         print(f"  Skill execution attempts:")
         for skill_name in sorted(skill_executions.keys()):
             attempts = skill_executions[skill_name]
-            failures = skill_failures.get(skill_name, 0)
-            print(f"    {skill_name}: {attempts} attempts, {failures} failures")
+            print(f"    {skill_name}: {attempts} attempts")
     print(f"{'='*60}\n")
 
     env.close()

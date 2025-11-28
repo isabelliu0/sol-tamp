@@ -7,7 +7,12 @@ from numpy.typing import NDArray
 
 
 class SkillOverrideWrapper(gym.Wrapper):
-    """Overrides actions for predefined skills while allowing shortcuts to be learned."""
+    """Overrides actions for predefined skills while allowing shortcuts to be learned.
+
+    When a predefined skill's preconditions are not met, returns a no-op action.
+    The controller learns from the resulting low task reward that this skill
+    should not be selected in this state.
+    """
 
     def __init__(
         self,
@@ -39,16 +44,28 @@ class SkillOverrideWrapper(gym.Wrapper):
 
             if current_policy_name in self.predefined_skills and current_policy_name != 'controller':
                 skill_policy = self.predefined_skills[current_policy_name]
-
                 skill_obs = self.last_raw_obs if self.last_raw_obs is not None else self.last_obs.get('observation')
-                predefined_action = skill_policy(skill_obs)
 
-                if isinstance(action, tuple):
-                    action = (predefined_action,) + action[1:]
-                else:
-                    action = list(action) if not isinstance(action, list) else action
-                    action[0] = predefined_action
-                    action = tuple(action)
+                try:
+                    predefined_action = skill_policy(skill_obs)
+
+                    if isinstance(action, tuple):
+                        action = (predefined_action,) + action[1:]
+                    else:
+                        action = list(action) if not isinstance(action, list) else action
+                        action[0] = predefined_action
+                        action = tuple(action)
+
+                except (AssertionError, ValueError, RuntimeError) as e:
+                    base_action_space = self.env.env.env.action_space if hasattr(self.env, 'env') else self.env.action_space
+                    noop_action = np.zeros(base_action_space.shape, dtype=base_action_space.dtype)
+
+                    if isinstance(action, tuple):
+                        action = (noop_action,) + action[1:]
+                    else:
+                        action = list(action) if not isinstance(action, list) else action
+                        action[0] = noop_action
+                        action = tuple(action)
 
         obs, reward, terminated, truncated, info = self.env.step(action)
         self.last_obs = obs

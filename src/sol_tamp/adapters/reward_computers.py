@@ -73,15 +73,19 @@ class TAMPPredicateRewardComputer(IntrinsicRewardComputer):
 
         rewards = {}
 
+        shortcut_reward = 0.0
         for spec in self.shortcut_specs:
-            reward_name = spec["name"]
             precond_strs = spec.get("preconditions", [])
             effect_strs = spec.get("effects", [])
 
             precond_satisfied = self._check_predicates(self.prev_atoms, precond_strs)
             effects_achieved = self._check_predicates(self.current_atoms, effect_strs)
 
-            rewards[reward_name] = 1.0 if (precond_satisfied and effects_achieved) else 0.0
+            if precond_satisfied and effects_achieved:
+                shortcut_reward = 1.0
+                break
+
+        rewards["shortcut_"] = shortcut_reward
 
         for skill_name in self.skill_names:
             reward_name = f"skill_{skill_name}"
@@ -102,8 +106,8 @@ class TAMPPredicateRewardComputer(IntrinsicRewardComputer):
         return True
 
     def get_reward_names(self) -> list[str]:
-        """Get all reward names."""
-        names = [spec["name"] for spec in self.shortcut_specs]
+        """Get all reward names (using metric names with digits removed)."""
+        names = ["shortcut_"] if self.shortcut_specs else []
         names.extend([f"skill_{name}" for name in self.skill_names])
         return names
 

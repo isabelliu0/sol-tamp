@@ -22,19 +22,12 @@ from tamp_improv.benchmarks.obstacle2d_graph import GraphObstacle2DTAMPSystem
 from sol_tamp.adapters.sol_wrapper import SOLEnvironmentWrapper
 from sol_tamp.adapters.reward_computers import TAMPPredicateRewardComputer
 from sol_tamp.adapters.observation_encoder import ObservationEncoder
+from sol_tamp.adapters.skill_override_wrapper import SkillOverrideWrapper
+from sol_tamp.adapters.skill_policies import get_predefined_skills
 
 
 def _load_trained_signatures(system_name: str, tamp_system) -> list[dict[str, any]]:
-    """Load trained shortcut signatures from pickle file.
-
-    Args:
-        system_name: Name of the TAMP system (e.g., 'ClutteredDrawerTAMPSystem')
-        tamp_system: TAMP system instance to get predicate type information
-
-    Returns:
-        List of shortcut spec dictionaries with keys: name, preconditions, effects.
-        Each spec contains predicate names with proper type signatures.
-    """
+    """Load trained shortcut signatures from pickle file."""
     signatures_path = Path("slap_data") / system_name / "trained_signatures.pkl"
 
     if not signatures_path.exists():
@@ -49,7 +42,6 @@ def _load_trained_signatures(system_name: str, tamp_system) -> list[dict[str, an
 
     print(f"Loaded {len(trained_sigs)} trained shortcut signatures for {system_name}")
 
-    # Build a mapping from predicate names to their type signatures
     predicate_types = {}
     for pred in tamp_system.predicates:
         type_names = [str(t.name) for t in pred.types]
@@ -64,10 +56,8 @@ def _load_trained_signatures(system_name: str, tamp_system) -> list[dict[str, an
             else:
                 return pred_name
         else:
-            # Fallback for predicates not in the system (shouldn't happen)
             return pred_name
 
-    # Convert ShortcutSignature objects to shortcut_specs format
     shortcut_specs = []
     for i, sig in enumerate(trained_sigs):
         preconditions = [_format_predicate(pred) for pred in sig.source_predicates]
@@ -86,7 +76,18 @@ TAMP_ENV_SPECS = {
     "cluttered_drawer": {
         "system_class": ClutteredDrawerTAMPSystem,
         "system_name": "ClutteredDrawerTAMPSystem",
-        "skill_names": ["Grasp", "Place", "Reach"],
+        "skill_names": [
+            "ReachSkill",
+            "GraspFrontBackSkill",
+            "GraspFullClearSkill",
+            "PlaceRightObjectSkill",
+            "PlaceTargetSkill",
+            "PlaceFrontObjectSkill",
+            "GraspNonTargetSkill",
+            "GraspLeftRightSkill",
+            "PlaceBackObjectSkill",
+            "PlaceLeftObjectSkill",
+        ],
     },
     "obstacle_tower": {
         "system_class": GraphObstacleTowerTAMPSystem,
@@ -101,7 +102,12 @@ TAMP_ENV_SPECS = {
     "obstacle2d": {
         "system_class": GraphObstacle2DTAMPSystem,
         "system_name": "GraphObstacle2DTAMPSystem",
-        "skill_names": ["PickUp", "PutDown"],
+        "skill_names": [
+            "GraphPickUpSkill",
+            "GraphPickUpFromTargetSkill",
+            "GraphPutDownSkill",
+            "GraphPutDownOnTargetSkill",
+        ],
     },
 }
 
@@ -166,7 +172,6 @@ def make_tamp_env(
         render_mode=render_mode,
     )
 
-    # Load trained shortcut signatures from pickle files
     shortcut_specs = _load_trained_signatures(spec["system_name"], tamp_system)
 
     reward_computer = TAMPPredicateRewardComputer(
@@ -185,18 +190,20 @@ def make_tamp_env(
 
     if cfg.with_sol:
         reward_scale = {
-            "shortcut_": cfg.reward_scale_shortcuts,
             "task_reward": cfg.reward_scale_task,
             "controller": 1.0,
+            "shortcut_": cfg.reward_scale_shortcuts,
         }
         base_policies = []
 
         for spec_item in shortcut_specs:
-            base_policies.append(spec_item["name"])
+            shortcut_name = spec_item["name"]
+            base_policies.append(shortcut_name)
 
         for skill_name in spec["skill_names"]:
-            reward_scale[f"skill_{skill_name}"] = cfg.reward_scale_skills
-            base_policies.append(f"skill_{skill_name}")
+            skill_policy_name = f"skill_{skill_name}"
+            reward_scale[skill_policy_name] = cfg.reward_scale_skills
+            base_policies.append(skill_policy_name)
 
         controller_reward_key = "task_reward"
 
@@ -207,6 +214,9 @@ def make_tamp_env(
             controller_reward_key,
             cfg.sol_num_option_steps,
         )
+
+        predefined_skills = get_predefined_skills(tamp_system, spec["skill_names"])
+        env = SkillOverrideWrapper(env, predefined_skills)
 
     return env
 

@@ -15,7 +15,7 @@ def tamp_override_defaults(env, parser):
         env_frameskip=1,
         nonlinearity="relu",
         batch_size=2048,
-        use_rnn=False,
+        use_rnn=True,
         adaptive_stddev=False,
         policy_initialization="torch_default",
         reward_scale=1.0,
@@ -34,24 +34,20 @@ def tamp_override_defaults(env, parser):
         with_vtrace=True,
         recurrence=128,
         normalize_input=False,
-        normalize_returns=True,
+        normalize_returns=False,
         value_bootstrap=True,
         experiment_summaries_interval=10,
         save_every_sec=120,
         serial_mode=False,
         async_rl=True,
+        with_sol=True,
+        sol_num_option_steps=50,
     )
 
 
 def add_tamp_env_args(env, parser):
     """Add TAMP-specific command line arguments."""
     p = parser
-    p.add_argument(
-        "--tamp_include_symbolic_features",
-        type=str2bool,
-        default=True,
-        help="Include symbolic predicate features in observations",
-    )
     p.add_argument(
         "--reward_scale_shortcuts",
         type=float,

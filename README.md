@@ -15,70 +15,115 @@ For this hierarchical RL baseline,
 
 ## Installation
 
-1. Install this package:
+### 1. Clone Repository with Submodules
 
 ```bash
-# Assume we are working with uv
-git submodule update --init
-uv venv --python=3.11
-uv pip install -e .
+git clone --recursive <your-repo-url>
+cd sol-tamp
+
+# If you already cloned without --recursive:
+git submodule update --init --recursive
 ```
 
-2. Install SOL dependencies (required):
+### 2. Create Python Environment
 
 ```bash
-uv pip install -r third-party/sol/requirements.txt
-cd third-party/sol/sol
+# Using conda (recommended)
+conda create -n sol-tamp python=3.11
+conda activate sol-tamp
+
+# Or using venv
+python3.11 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install sol-tamp Package
+
+```bash
+pip install -e .
+```
+
+### 4. Setup SOL
+
+```bash
+# Get absolute path to SOL submodule
+SOL_PATH="$(pwd)/third-party/sol"
+
+# Add SOL to Python path via .pth file
+SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
+echo "$SOL_PATH" > "$SITE_PACKAGES/sol-tamp.pth"
+
+# Install SOL dependencies
+cd third-party/sol
+pip install -r requirements.txt
+
+# Build Cython extensions
+cd sol
 python setup.py build_ext --inplace
+cd ../../..
 ```
 
-3. Add SOL to PYTHONPATH:
+### 5. Download Shortcut Training Data (Optional)
 
-```bash
-export PYTHONPATH=/home/airlabbw/NeSy/skill_refactor_branches/sol-tamp/third-party/sol:$PYTHONPATH
-```
+Download from [SLAP-Shortcuts](http://slap-data.s3-website.us-east-2.amazonaws.com/#training_data/multi_rl/) and organize as:
 
-4. Download Shortcut Signatures from [SLAP-Shortcuts](http://slap-data.s3-website.us-east-2.amazonaws.com/#training_data/multi_rl/) and [SLAP-Policies](http://slap-data.s3-website.us-east-2.amazonaws.com/#trained_policies/multi_rl/)
-
-Desired structure
 ```
 slap_data/
-    CleanupTableTAMPSystem/
-        config.json
-        current_atoms.pkl
-        pattern_n7-to-n132_b5e0169c_0e5ec8e8.pkl
-        policy_n7-to-n132_b5e0169c_0e5ec8e8.zip
-        ...
-    ClutteredDrawerTAMPSystem/
+├── ClutteredDrawerTAMPSystem/
+│   ├── trained_signatures.pkl
+│   ├── current_atoms.pkl
+│   └── goal_atoms.pkl
+├── GraphObstacleTowerTAMPSystem/
+│   └── trained_signatures.pkl
+├── CleanupTableTAMPSystem/
+│   └── trained_signatures.pkl
+└── GraphObstacle2DTAMPSystem/
+    └── trained_signatures.pkl
 ```
 
+**Note:** If `slap_data/` doesn't exist, the system will still work but with empty shortcut lists.
 
 ## Usage
 
-Train SOL on TAMP environments using SOL's launch.py:
+### Training with SOL
 
 ```bash
-cd /path/to/sol
-python launch.py --expfile /home/airlabbw/NeSy/skill_refactor_branches/sol-tamp/configs/sol_tamp.yaml --mode local --debug
-```
-
-Or directly with Sample Factory:
-
-```bash
-python experiments/train_tamp.py \
+python -m sample_factory.algorithms.appo.train_appo \
     --env=tamp_cluttered_drawer \
     --experiment=sol_cluttered_drawer \
     --with_sol=True \
-    --sol_num_option_steps=-1 \
+    --sol_num_option_steps=10 \
     --reward_scale_shortcuts=1.0 \
     --reward_scale_skills=1.0 \
-    --reward_scale_task=10.0
+    --reward_scale_task=10.0 \
+    --num_workers=8 \
+    --num_envs_per_worker=4 \
+    --train_for_env_steps=10000000
 ```
 
-Run tests:
+**Key parameters:**
+
+- `--with_sol=True`: Enable hierarchical SOL learning
+- `--sol_num_option_steps`: Max steps per option (-1 for unlimited)
+- `--reward_scale_*`: Scaling for different reward types
+
+### Training without SOL (Flat RL Baseline)
 
 ```bash
+python -m sample_factory.algorithms.appo.train_appo \
+    --env=tamp_cluttered_drawer \
+    --experiment=flat_rl_cluttered_drawer \
+    --with_sol=False
+```
+
+### Run Tests
+
+```bash
+# All tests
 pytest tests/
+
+# Specific test
+pytest tests/test_integration.py -v -s
 ```
 
 ## Supported Environments

@@ -170,3 +170,4 @@ cython_debug/
 #.idea/
 
 slap_data
+train_dir

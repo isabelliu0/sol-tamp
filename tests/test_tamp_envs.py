@@ -11,21 +11,8 @@ def test_env_specs_defined():
     for env_name in expected_envs:
         assert env_name in TAMP_ENV_SPECS
         assert "system_class" in TAMP_ENV_SPECS[env_name]
-        assert "shortcut_specs" in TAMP_ENV_SPECS[env_name]
+        assert "system_name" in TAMP_ENV_SPECS[env_name]
         assert "skill_names" in TAMP_ENV_SPECS[env_name]
-
-
-def test_shortcut_specs_format():
-    """Test that shortcut specs are properly formatted."""
-    for env_name, spec in TAMP_ENV_SPECS.items():
-        shortcuts = spec["shortcut_specs"]
-        assert isinstance(shortcuts, list)
-        for shortcut in shortcuts:
-            assert "name" in shortcut
-            assert "preconditions" in shortcut
-            assert "effects" in shortcut
-            assert isinstance(shortcut["preconditions"], list)
-            assert isinstance(shortcut["effects"], list)
 
 
 def test_make_tamp_env_cluttered_drawer():

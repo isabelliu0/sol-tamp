@@ -110,13 +110,17 @@ def test_intrinsic_rewards_structure():
     intrinsic_rewards = info["intrinsic_rewards"]
 
     assert isinstance(intrinsic_rewards, dict)
-    assert "shortcut_0" in intrinsic_rewards
-    assert any(k.startswith("skill_") for k in intrinsic_rewards.keys())
+    assert len(intrinsic_rewards) > 0, "Should have at least some rewards (skills or shortcuts)"
+    assert any(k.startswith("skill_") for k in intrinsic_rewards.keys()), "Should have skill rewards"
 
     print(f"✓ Intrinsic rewards computed")
     print(f"  Total: {len(intrinsic_rewards)}")
-    print(f"  Shortcuts: {[k for k in intrinsic_rewards if k.startswith('shortcut')]}")
-    print(f"  Skills: {[k for k in intrinsic_rewards if k.startswith('skill')]}")
+
+    shortcuts = [k for k in intrinsic_rewards if k.startswith('shortcut')]
+    skills = [k for k in intrinsic_rewards if k.startswith('skill')]
+
+    print(f"  Shortcuts: {shortcuts if shortcuts else 'None (slap_data/ not found)'}")
+    print(f"  Skills: {skills}")
 
     for value in intrinsic_rewards.values():
         assert isinstance(value, float)
@@ -202,3 +206,47 @@ def test_episode_rollout():
     print(f"  Avg reward: {total_reward/total_steps:.3f}\n")
 
     env.close()
+
+
+def test_training_with_loaded_shortcuts():
+    """Test that shortcuts are loaded from pickle files correctly."""
+    print(f"\n{'='*60}")
+    print(f"Testing training with loaded shortcut data")
+    print(f"{'='*60}")
+
+    cfg = MagicMock()
+    cfg.seed = 42
+    cfg.tamp_include_symbolic_features = True
+    cfg.with_sol = True
+    cfg.reward_scale_shortcuts = 1.0
+    cfg.reward_scale_skills = 1.0
+    cfg.reward_scale_task = 10.0
+    cfg.sol_num_option_steps = 10
+
+    env = make_tamp_env("tamp_cluttered_drawer", cfg, {})
+    
+    print(f"✓ Environment created with SOL wrapper")
+    print(f"  Base policies: {env.base_policies}")
+    
+    shortcut_policies = [p for p in env.base_policies if p.startswith('shortcut_')]
+    skill_policies = [p for p in env.base_policies if p.startswith('skill_')]
+    print(f"  Loaded shortcuts: {len(shortcut_policies)}")
+    print(f"  Shortcut names: {shortcut_policies}")
+    print(f"  Skills: {skill_policies}")
+    
+    assert len(shortcut_policies) > 0, "Should have loaded shortcuts from slap_data/"
+    assert len(skill_policies) > 0, "Should have skill policies"
+
+    obs, info = env.reset()
+    assert "observation" in obs
+    assert "current_policy" in obs
+    assert "rewards" in obs
+    
+    print(f"✓ Environment reset successfully")
+
+    action = env.action_space.sample()
+    obs, reward, terminated, truncated, info = env.step(action)
+    print(f"✓ Environment step successful")
+    
+    env.close()
+    print(f"✓ Test passed - ready for SOL training with loaded shortcuts!\n")

@@ -1,6 +1,8 @@
 """TAMP environment registration and factory for SOL."""
 
-from typing import Optional, Callable, Any
+import pickle
+from pathlib import Path
+from typing import Optional
 import gymnasium as gym
 from gymnasium.spaces import Graph
 
@@ -22,49 +24,83 @@ from sol_tamp.adapters.reward_computers import TAMPPredicateRewardComputer
 from sol_tamp.adapters.observation_encoder import ObservationEncoder
 
 
+def _load_trained_signatures(system_name: str, tamp_system) -> list[dict[str, any]]:
+    """Load trained shortcut signatures from pickle file.
+
+    Args:
+        system_name: Name of the TAMP system (e.g., 'ClutteredDrawerTAMPSystem')
+        tamp_system: TAMP system instance to get predicate type information
+
+    Returns:
+        List of shortcut spec dictionaries with keys: name, preconditions, effects.
+        Each spec contains predicate names with proper type signatures.
+    """
+    signatures_path = Path("slap_data") / system_name / "trained_signatures.pkl"
+
+    if not signatures_path.exists():
+        print(
+            f"Warning: Trained signatures not found at {signatures_path}. "
+            "Using empty signature list. Run TAMP training data collection to generate signatures."
+        )
+        return []
+
+    with open(signatures_path, "rb") as f:
+        trained_sigs = pickle.load(f)
+
+    print(f"Loaded {len(trained_sigs)} trained shortcut signatures for {system_name}")
+
+    # Build a mapping from predicate names to their type signatures
+    predicate_types = {}
+    for pred in tamp_system.predicates:
+        type_names = [str(t.name) for t in pred.types]
+        predicate_types[pred.name] = type_names
+
+    def _format_predicate(pred_name: str) -> str:
+        """Format predicate with its actual type signature."""
+        if pred_name in predicate_types:
+            types = predicate_types[pred_name]
+            if types:
+                return f"{pred_name}({', '.join(types)})"
+            else:
+                return pred_name
+        else:
+            # Fallback for predicates not in the system (shouldn't happen)
+            return pred_name
+
+    # Convert ShortcutSignature objects to shortcut_specs format
+    shortcut_specs = []
+    for i, sig in enumerate(trained_sigs):
+        preconditions = [_format_predicate(pred) for pred in sig.source_predicates]
+        effects = [_format_predicate(pred) for pred in sig.target_predicates]
+
+        shortcut_specs.append({
+            "name": f"shortcut_{i}",
+            "preconditions": preconditions,
+            "effects": effects,
+        })
+
+    return shortcut_specs
+
+
 TAMP_ENV_SPECS = {
     "cluttered_drawer": {
         "system_class": ClutteredDrawerTAMPSystem,
-        "shortcut_specs": [
-            {
-                "name": "shortcut_0",
-                "preconditions": ["On(block, table)"],
-                "effects": ["InDrawer(block)"],
-            }
-        ],
+        "system_name": "ClutteredDrawerTAMPSystem",
         "skill_names": ["Grasp", "Place", "Reach"],
     },
     "obstacle_tower": {
         "system_class": GraphObstacleTowerTAMPSystem,
-        "shortcut_specs": [
-            {
-                "name": "shortcut_0",
-                "preconditions": ["On(block, table)"],
-                "effects": ["On(block, target)"],
-            }
-        ],
+        "system_name": "GraphObstacleTowerTAMPSystem",
         "skill_names": ["Grasp", "Place", "Reach"],
     },
     "cleanup_table": {
         "system_class": CleanupTableTAMPSystem,
-        "shortcut_specs": [
-            {
-                "name": "shortcut_0",
-                "preconditions": ["On(toy, table)"],
-                "effects": ["InBin(toy)"],
-            }
-        ],
+        "system_name": "CleanupTableTAMPSystem",
         "skill_names": ["Grasp", "Place", "Reach"],
     },
     "obstacle2d": {
         "system_class": GraphObstacle2DTAMPSystem,
-        "shortcut_specs": [
-            {
-                "name": "shortcut_0",
-                "preconditions": ["Holding(robot, ball)"],
-                "effects": ["At(ball, target)"],
-            }
-        ],
+        "system_name": "GraphObstacle2DTAMPSystem",
         "skill_names": ["PickUp", "PutDown"],
     },
 }
@@ -130,9 +166,12 @@ def make_tamp_env(
         render_mode=render_mode,
     )
 
+    # Load trained shortcut signatures from pickle files
+    shortcut_specs = _load_trained_signatures(spec["system_name"], tamp_system)
+
     reward_computer = TAMPPredicateRewardComputer(
         tamp_system=tamp_system,
-        shortcut_specs=spec["shortcut_specs"],
+        shortcut_specs=shortcut_specs,
         skill_names=spec["skill_names"],
     )
 
@@ -152,7 +191,7 @@ def make_tamp_env(
         }
         base_policies = []
 
-        for spec_item in spec["shortcut_specs"]:
+        for spec_item in shortcut_specs:
             base_policies.append(spec_item["name"])
 
         for skill_name in spec["skill_names"]:

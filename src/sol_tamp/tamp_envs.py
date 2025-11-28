@@ -24,15 +24,16 @@ from sol_tamp.adapters.reward_computers import TAMPPredicateRewardComputer
 from sol_tamp.adapters.observation_encoder import ObservationEncoder
 
 
-def _load_trained_signatures(system_name: str) -> list[dict[str, any]]:
+def _load_trained_signatures(system_name: str, tamp_system) -> list[dict[str, any]]:
     """Load trained shortcut signatures from pickle file.
 
     Args:
         system_name: Name of the TAMP system (e.g., 'ClutteredDrawerTAMPSystem')
+        tamp_system: TAMP system instance to get predicate type information
 
     Returns:
         List of shortcut spec dictionaries with keys: name, preconditions, effects.
-        Each spec contains predicate names as strings.
+        Each spec contains predicate names with proper type signatures.
     """
     signatures_path = Path("slap_data") / system_name / "trained_signatures.pkl"
 
@@ -48,19 +49,29 @@ def _load_trained_signatures(system_name: str) -> list[dict[str, any]]:
 
     print(f"Loaded {len(trained_sigs)} trained shortcut signatures for {system_name}")
 
+    # Build a mapping from predicate names to their type signatures
+    predicate_types = {}
+    for pred in tamp_system.predicates:
+        type_names = [str(t.name) for t in pred.types]
+        predicate_types[pred.name] = type_names
+
+    def _format_predicate(pred_name: str) -> str:
+        """Format predicate with its actual type signature."""
+        if pred_name in predicate_types:
+            types = predicate_types[pred_name]
+            if types:
+                return f"{pred_name}({', '.join(types)})"
+            else:
+                return pred_name
+        else:
+            # Fallback for predicates not in the system (shouldn't happen)
+            return pred_name
+
     # Convert ShortcutSignature objects to shortcut_specs format
     shortcut_specs = []
     for i, sig in enumerate(trained_sigs):
-        # Create predicate strings with placeholder objects
-        # e.g., "Holding" -> "Holding(obj)"
-        preconditions = [
-            f"{pred}(obj)" if pred not in ["GripperEmpty", "NotGripperEmpty"] else pred
-            for pred in sig.source_predicates
-        ]
-        effects = [
-            f"{pred}(obj)" if pred not in ["GripperEmpty", "NotGripperEmpty"] else pred
-            for pred in sig.target_predicates
-        ]
+        preconditions = [_format_predicate(pred) for pred in sig.source_predicates]
+        effects = [_format_predicate(pred) for pred in sig.target_predicates]
 
         shortcut_specs.append({
             "name": f"shortcut_{i}",
@@ -156,7 +167,7 @@ def make_tamp_env(
     )
 
     # Load trained shortcut signatures from pickle files
-    shortcut_specs = _load_trained_signatures(spec["system_name"])
+    shortcut_specs = _load_trained_signatures(spec["system_name"], tamp_system)
 
     reward_computer = TAMPPredicateRewardComputer(
         tamp_system=tamp_system,

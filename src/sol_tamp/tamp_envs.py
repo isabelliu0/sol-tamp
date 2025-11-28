@@ -1,6 +1,7 @@
 """TAMP environment registration and factory for SOL."""
 
 import pickle
+from pathlib import Path
 from typing import Optional
 import gymnasium as gym
 from gymnasium.spaces import Graph
@@ -23,16 +24,15 @@ from sol_tamp.adapters.reward_computers import TAMPPredicateRewardComputer
 from sol_tamp.adapters.observation_encoder import ObservationEncoder
 
 
-def _load_trained_signatures(system_name: str) -> list[tuple[frozenset[str], frozenset[str]]]:
+def _load_trained_signatures(system_name: str) -> list[dict[str, any]]:
     """Load trained shortcut signatures from pickle file.
 
     Args:
         system_name: Name of the TAMP system (e.g., 'ClutteredDrawerTAMPSystem')
 
     Returns:
-        List of shortcut signatures as (preconditions, effects) tuples.
-        Each signature is converted from ShortcutSignature objects to frozenset pairs
-        containing predicate names with placeholder objects.
+        List of shortcut spec dictionaries with keys: name, preconditions, effects.
+        Each spec contains predicate names as strings.
     """
     signatures_path = Path("slap_data") / system_name / "trained_signatures.pkl"
 
@@ -48,69 +48,48 @@ def _load_trained_signatures(system_name: str) -> list[tuple[frozenset[str], fro
 
     print(f"Loaded {len(trained_sigs)} trained shortcut signatures for {system_name}")
 
-    # Convert ShortcutSignature objects to (preconditions, effects) format
-    # For now, we use predicate names with generic object placeholders
-    # This allows the intrinsic reward computer to match based on predicates
-    converted_signatures = []
-    for sig in trained_sigs:
+    # Convert ShortcutSignature objects to shortcut_specs format
+    shortcut_specs = []
+    for i, sig in enumerate(trained_sigs):
         # Create predicate strings with placeholder objects
         # e.g., "Holding" -> "Holding(obj)"
-        source_preds = frozenset(
+        preconditions = [
             f"{pred}(obj)" if pred not in ["GripperEmpty", "NotGripperEmpty"] else pred
             for pred in sig.source_predicates
-        )
-        target_preds = frozenset(
+        ]
+        effects = [
             f"{pred}(obj)" if pred not in ["GripperEmpty", "NotGripperEmpty"] else pred
             for pred in sig.target_predicates
-        )
-        converted_signatures.append((source_preds, target_preds))
+        ]
 
-    return converted_signatures
+        shortcut_specs.append({
+            "name": f"shortcut_{i}",
+            "preconditions": preconditions,
+            "effects": effects,
+        })
+
+    return shortcut_specs
 
 
 TAMP_ENV_SPECS = {
     "cluttered_drawer": {
         "system_class": ClutteredDrawerTAMPSystem,
-        "shortcut_specs": [
-            {
-                "name": "shortcut_0",
-                "preconditions": ["On(block, table)"],
-                "effects": ["InDrawer(block)"],
-            }
-        ],
+        "system_name": "ClutteredDrawerTAMPSystem",
         "skill_names": ["Grasp", "Place", "Reach"],
     },
     "obstacle_tower": {
         "system_class": GraphObstacleTowerTAMPSystem,
-        "shortcut_specs": [
-            {
-                "name": "shortcut_0",
-                "preconditions": ["On(block, table)"],
-                "effects": ["On(block, target)"],
-            }
-        ],
+        "system_name": "GraphObstacleTowerTAMPSystem",
         "skill_names": ["Grasp", "Place", "Reach"],
     },
     "cleanup_table": {
         "system_class": CleanupTableTAMPSystem,
-        "shortcut_specs": [
-            {
-                "name": "shortcut_0",
-                "preconditions": ["On(toy, table)"],
-                "effects": ["InBin(toy)"],
-            }
-        ],
+        "system_name": "CleanupTableTAMPSystem",
         "skill_names": ["Grasp", "Place", "Reach"],
     },
     "obstacle2d": {
         "system_class": GraphObstacle2DTAMPSystem,
-        "shortcut_specs": [
-            {
-                "name": "shortcut_0",
-                "preconditions": ["Holding(robot, ball)"],
-                "effects": ["At(ball, target)"],
-            }
-        ],
+        "system_name": "GraphObstacle2DTAMPSystem",
         "skill_names": ["PickUp", "PutDown"],
     },
 }
@@ -176,9 +155,12 @@ def make_tamp_env(
         render_mode=render_mode,
     )
 
+    # Load trained shortcut signatures from pickle files
+    shortcut_specs = _load_trained_signatures(spec["system_name"])
+
     reward_computer = TAMPPredicateRewardComputer(
         tamp_system=tamp_system,
-        shortcut_specs=spec["shortcut_specs"],
+        shortcut_specs=shortcut_specs,
         skill_names=spec["skill_names"],
     )
 
@@ -190,13 +172,6 @@ def make_tamp_env(
         observation_encoder=observation_encoder,
     )
 
-    # Initialize skill manager by doing a temporary reset to get objects
-    # This is needed because some perceivers (e.g., GraphObstacle2D) only
-    # provide objects after reset
-    temp_obs, temp_info = env.env.reset()
-    objects, _, _ = tamp_system.perceiver.reset(temp_obs, temp_info)
-    env.skill_manager.initialize_with_objects(objects)
-
     if cfg.with_sol:
         reward_scale = {
             "shortcut_": cfg.reward_scale_shortcuts,
@@ -205,7 +180,7 @@ def make_tamp_env(
         }
         base_policies = []
 
-        for spec_item in spec["shortcut_specs"]:
+        for spec_item in shortcut_specs:
             base_policies.append(spec_item["name"])
 
         for skill_name in spec["skill_names"]:

@@ -77,6 +77,8 @@ class SOLEnvironmentWrapper(gym.Wrapper):
         self.prev_obs = obs
         self.current_obs = obs
 
+        info['raw_obs'] = obs
+
         encoded_obs = self._encode_observation(obs)
 
         if not isinstance(encoded_obs, dict):
@@ -95,6 +97,8 @@ class SOLEnvironmentWrapper(gym.Wrapper):
 
         obs, reward, terminated, truncated, info = self.env.step(action)
         self.current_obs = obs
+
+        info['raw_obs'] = obs
 
         intrinsic_rewards = self.reward_computer.compute_rewards(
             self.prev_obs, self.current_obs, action, info

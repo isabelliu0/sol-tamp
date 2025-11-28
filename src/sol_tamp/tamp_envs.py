@@ -102,7 +102,12 @@ TAMP_ENV_SPECS = {
     "obstacle2d": {
         "system_class": GraphObstacle2DTAMPSystem,
         "system_name": "GraphObstacle2DTAMPSystem",
-        "skill_names": ["PickUp", "PutDown"],
+        "skill_names": [
+            "GraphPickUpSkill",
+            "GraphPickUpFromTargetSkill",
+            "GraphPutDownSkill",
+            "GraphPutDownOnTargetSkill",
+        ],
     },
 }
 

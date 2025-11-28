@@ -47,10 +47,16 @@ def add_tamp_env_args(env, parser):
     """Add TAMP-specific command line arguments."""
     p = parser
     p.add_argument(
-        "--tamp_include_symbolic_features",
+        "--with_sol",
         type=str2bool,
         default=True,
-        help="Include symbolic predicate features in observations",
+        help="Enable SOL hierarchical wrapper for option learning",
+    )
+    p.add_argument(
+        "--sol_num_option_steps",
+        type=int,
+        default=50,
+        help="Number of steps each option executes before returning to controller",
     )
     p.add_argument(
         "--reward_scale_shortcuts",

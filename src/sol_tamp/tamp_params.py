@@ -46,11 +46,7 @@ def tamp_override_defaults(env, parser):
 
 
 def add_tamp_env_args(env, parser):
-    """Add TAMP-specific command line arguments.
-
-    Note: --with_sol and --sol_num_option_steps are already defined by SOL
-    in sample_factory.cfg.cfg.add_sol_args()
-    """
+    """Add TAMP-specific command line arguments."""
     p = parser
     p.add_argument(
         "--reward_scale_shortcuts",

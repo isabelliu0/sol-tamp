@@ -25,6 +25,7 @@ class SOLEnvironmentWrapper(gym.Wrapper):
         env: gym.Env,
         reward_computer: IntrinsicRewardComputer,
         observation_encoder: Optional[Callable] = None,
+        max_steps: int = 300,
     ):
         """Initialize SOL wrapper.
 
@@ -39,6 +40,8 @@ class SOLEnvironmentWrapper(gym.Wrapper):
 
         self.prev_obs = None
         self.current_obs = None
+        self.max_steps = max_steps
+        self.step_count = 0
 
         self._setup_observation_space()
 
@@ -86,6 +89,7 @@ class SOLEnvironmentWrapper(gym.Wrapper):
 
         reward_names = self.reward_computer.get_reward_names()
         info["intrinsic_rewards"] = {name: 0.0 for name in reward_names}
+        self.step_count = 0
 
         return encoded_obs, info
 
@@ -93,9 +97,12 @@ class SOLEnvironmentWrapper(gym.Wrapper):
         self, action
     ) -> tuple[dict[str, Any], float, bool, bool, dict[str, Any]]:
         """Step environment."""
+        self.step_count += 1
         self.prev_obs = self.current_obs
 
-        obs, reward, terminated, truncated, info = self.env.step(action)
+        # NOTE: SLAP envs by default never truncate episodes, 
+        # so we handle max_steps here
+        obs, reward, terminated, _, info = self.env.step(action)
         self.current_obs = obs
 
         info['raw_obs'] = obs
@@ -109,5 +116,10 @@ class SOLEnvironmentWrapper(gym.Wrapper):
 
         if not isinstance(encoded_obs, dict):
             encoded_obs = {"observation": encoded_obs}
+
+        if self.step_count >= self.max_steps:
+            truncated = True
+        else:
+            truncated = False
 
         return encoded_obs, reward, terminated, truncated, info

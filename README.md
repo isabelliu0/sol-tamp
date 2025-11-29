@@ -108,23 +108,36 @@ python experiments/train_tamp.py \
 
 ### Evaluation
 
-Evaluate trained policy:
+Evaluate trained policy and save video:
 
 ```bash
-# Evaluate latest checkpoint
+# Evaluate with video recording (recommended)
 python experiments/enjoy_tamp.py \
     --env=tamp_obstacle2d \
-    --experiment=my_experiment
+    --experiment=my_experiment \
+    --save_video \
+    --video_name=obstacle2d_demo \
+    --max_num_episodes=5
+
+# Evaluate without rendering (faster)
+python experiments/enjoy_tamp.py \
+    --env=tamp_obstacle2d \
+    --experiment=my_experiment \
+    --no_render \
+    --max_num_episodes=20
 ```
+
+**Note:** The obstacle2d environment only supports `render_mode="rgb_array"`, so use `--save_video` to record episodes as MP4 videos (saved to experiment directory) or `--no_render` for faster evaluation without visualization.
 
 **Key parameters:**
 
+- `--save_video`: Record episodes and save as MP4 video
+- `--video_name=policy_demo`: Custom video filename (default: replay.mp4)
+- `--no_render`: Disable rendering for faster evaluation
 - `--load_checkpoint_kind=best`: Load best checkpoint instead of latest
 - `--max_num_episodes=20`: Number of evaluation episodes
 - `--eval_deterministic=True`: Deterministic evaluation
-- `--eval_stats_path=./results.csv`: Save results to CSV
-- `--reward_scale_task=10.0`: Task completion scaling
-- `--save_video`, `--video_name=policy_demo`: Video saving
+- `--fps=30`: Video frame rate (default: 30)
 
 ### Monitoring Training
 

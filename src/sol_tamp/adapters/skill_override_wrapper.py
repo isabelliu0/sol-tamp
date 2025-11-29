@@ -70,7 +70,10 @@ class SkillOverrideWrapper(gym.Wrapper):
                         action[0] = predefined_action
                         action = tuple(action)
 
-                except (AssertionError, ValueError, RuntimeError) as e:
+                except (AssertionError, ValueError, RuntimeError, IndexError) as e:
+                    # IndexError: PyBullet skills raise this when motion plan is exhausted
+                    # AssertionError: TAMP skills raise this when preconditions not met
+                    # ValueError/RuntimeError: Other skill execution failures
                     base_action_space = self.env.env.env.action_space if hasattr(self.env, 'env') else self.env.action_space
                     noop_action = np.zeros(base_action_space.shape, dtype=base_action_space.dtype)
 

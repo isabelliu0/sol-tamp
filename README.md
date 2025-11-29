@@ -89,10 +89,11 @@ slap_data/
 
 ```bash
 python -m sample_factory.algorithms.appo.train_appo \
-    --env=tamp_cluttered_drawer \
-    --experiment=sol_cluttered_drawer \
+    --env=tamp_obstacle2d \
+    --experiment=sol_tamp_obstacle2d \
     --with_sol=True \
-    --sol_num_option_steps=10 \
+    --sol_num_option_steps=50 \
+    --exploration_loss_coeff=0.0001 \
     --reward_scale_shortcuts=1.0 \
     --reward_scale_skills=1.0 \
     --reward_scale_task=10.0 \

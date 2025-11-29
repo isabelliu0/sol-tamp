@@ -85,37 +85,73 @@ slap_data/
 
 ## Usage
 
-### Training with SOL
+### Training
+
+Train SOL on obstacle2d:
 
 ```bash
-python -m sample_factory.algorithms.appo.train_appo \
+python experiments/train_tamp.py \
     --env=tamp_obstacle2d \
-    --experiment=sol_tamp_obstacle2d \
+    --experiment=my_experiment \
     --with_sol=True \
     --sol_num_option_steps=50 \
-    --exploration_loss_coeff=0.0001 \
-    --reward_scale_shortcuts=1.0 \
-    --reward_scale_skills=1.0 \
-    --reward_scale_task=10.0 \
-    --num_workers=8 \
-    --num_envs_per_worker=4 \
-    --train_for_env_steps=10000000
+    --exploration_loss_coeff=0.0001
 ```
 
 **Key parameters:**
 
-- `--with_sol=True`: Enable hierarchical SOL learning
-- `--sol_num_option_steps`: Max steps per option (-1 for unlimited)
-- `--reward_scale_*`: Scaling for different reward types
+- `--with_sol=True` (default): Enable hierarchical SOL learning
+- `--sol_num_option_steps=50` (default): Steps per option
+- `--reward_scale_shortcuts=1.0`: Shortcut reward scaling
+- `--reward_scale_skills=1.0`: Skill reward scaling
+- `--reward_scale_task=10.0`: Task completion scaling
 
-### Training without SOL (Flat RL Baseline)
+### Evaluation
+
+Evaluate trained policy and save video:
 
 ```bash
-python -m sample_factory.algorithms.appo.train_appo \
-    --env=tamp_cluttered_drawer \
-    --experiment=flat_rl_cluttered_drawer \
-    --with_sol=False
+# Evaluate with video recording (recommended)
+python experiments/enjoy_tamp.py \
+    --env=tamp_obstacle2d \
+    --experiment=my_experiment \
+    --save_video \
+    --video_name=obstacle2d_demo \
+    --max_num_episodes=5
+
+# Evaluate without rendering (faster)
+python experiments/enjoy_tamp.py \
+    --env=tamp_obstacle2d \
+    --experiment=my_experiment \
+    --no_render \
+    --max_num_episodes=20
 ```
+
+**Note:** The obstacle2d environment only supports `render_mode="rgb_array"`, so use `--save_video` to record episodes as MP4 videos (saved to experiment directory) or `--no_render` for faster evaluation without visualization.
+
+**Key parameters:**
+
+- `--save_video`: Record episodes and save as MP4 video
+- `--video_name=policy_demo`: Custom video filename (default: replay.mp4)
+- `--no_render`: Disable rendering for faster evaluation
+- `--load_checkpoint_kind=best`: Load best checkpoint instead of latest
+- `--max_num_episodes=20`: Number of evaluation episodes
+- `--eval_deterministic=True`: Deterministic evaluation
+- `--fps=30`: Video frame rate (default: 30)
+
+### Monitoring Training
+
+View TensorBoard logs:
+
+```bash
+tensorboard --logdir=train_dir/
+```
+
+Key metrics:
+- `0/reward_raw` - Episode returns
+- `controller_reward` - High-level controller performance
+- `shortcut_*/returns` - Shortcut learning progress
+- `skill_*/returns` - Skill usage statistics
 
 ### Run Tests
 
@@ -129,7 +165,7 @@ pytest tests/test_integration.py -v -s
 
 ## Supported Environments
 
+- `tamp_obstacle2d` - Obstacle2D from SLAP
 - `tamp_cluttered_drawer` - ClutteredDrawer from SLAP
 - `tamp_obstacle_tower` - ObstacleTower from SLAP
 - `tamp_cleanup_table` - CleanupTable from SLAP
-- `tamp_obstacle2d` - Obstacle2D from SLAP

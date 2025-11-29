@@ -31,6 +31,20 @@ class SkillOverrideWrapper(gym.Wrapper):
                 assert skill_name in env.policies, \
                     f"Skill '{skill_name}' not found in env.policies: {env.policies}"
 
+    @property
+    def policies(self):
+        """Pass through policies attribute from wrapped environment."""
+        if hasattr(self.env, 'policies'):
+            return self.env.policies
+        return None
+
+    @property
+    def current_policy(self):
+        """Pass through current_policy attribute from wrapped environment."""
+        if hasattr(self.env, 'current_policy'):
+            return self.env.current_policy
+        return None
+
     def reset(self, seed=None, options=None):
         obs, info = self.env.reset(seed=seed, options=options)
         self.last_obs = obs

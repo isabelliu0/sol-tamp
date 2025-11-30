@@ -30,6 +30,9 @@ class TAMPSkillPolicy:
         if not self.is_initialized:
             self._initialize_skill(obs)
 
+        if not self.is_initialized:
+            raise AssertionError(f"Skill {self.skill_name} could not be initialized - no valid groundings found")
+
         return self.skill.get_action(obs)
 
     def _initialize_skill(self, obs: Any):
@@ -37,18 +40,22 @@ class TAMPSkillPolicy:
         current_atoms = perceiver.step(obs)
         objects = perceiver._get_objects()
 
-        operator_name = self.skill_name.replace("Skill", "")
+        # Get operator name from skill's _get_operator_name() method
+        operator_name = self.skill._get_operator_name()
 
         for operator in self.tamp_system.operators:
             if operator.name == operator_name:
                 groundings = self._get_valid_groundings(operator, objects, current_atoms)
-                if groundings:
-                    ground_op = operator.ground(groundings[0])
-                    self.skill.reset(ground_op)
-                    self.current_operator = ground_op
-                    self.is_initialized = True
+                if not groundings:
+                    self.is_initialized = False
                     return
+                ground_op = operator.ground(groundings[0])
+                self.skill.reset(ground_op)
+                self.current_operator = ground_op
+                self.is_initialized = True
+                return
 
+        print(f"[{self.skill_name}] No matching operator found for name: {operator_name}")
         self.is_initialized = False
 
     def _get_valid_groundings(self, operator, objects, current_atoms):

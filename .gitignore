@@ -171,4 +171,5 @@ cython_debug/
 
 slap_data
 train_dir
+videos
 .vscode/

@@ -63,26 +63,27 @@ class SkillOverrideWrapper(gym.Wrapper):
                 try:
                     predefined_action = skill_policy(skill_obs)
 
+                    # Convert to list for HierarchicalWrapper compatibility
                     if isinstance(action, tuple):
-                        action = (predefined_action,) + action[1:]
+                        action = [predefined_action] + list(action[1:])
                     else:
                         action = list(action) if not isinstance(action, list) else action
                         action[0] = predefined_action
-                        action = tuple(action)
 
                 except (AssertionError, ValueError, RuntimeError, IndexError) as e:
                     # IndexError: PyBullet skills raise this when motion plan is exhausted
                     # AssertionError: TAMP skills raise this when preconditions not met
                     # ValueError/RuntimeError: Other skill execution failures
+                    print(f"[SkillOverrideWrapper] Skill {current_policy_name} failed: {type(e).__name__}: {e}")
                     base_action_space = self.env.env.env.action_space if hasattr(self.env, 'env') else self.env.action_space
                     noop_action = np.zeros(base_action_space.shape, dtype=base_action_space.dtype)
 
+                    # Convert to list for HierarchicalWrapper compatibility
                     if isinstance(action, tuple):
-                        action = (noop_action,) + action[1:]
+                        action = [noop_action] + list(action[1:])
                     else:
                         action = list(action) if not isinstance(action, list) else action
                         action[0] = noop_action
-                        action = tuple(action)
 
         obs, reward, terminated, truncated, info = self.env.step(action)
         self.last_obs = obs

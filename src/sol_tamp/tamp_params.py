@@ -72,3 +72,9 @@ def add_tamp_env_args(env, parser):
         default=False,
         help="if debug, the environment will always be reset to a default state"
     )
+    p.add_argument(
+        "--use_shortcuts",
+        type=str2bool,
+        default=True,
+        help="Whether to load and use shortcut policies (set to False for skills-only training)"
+    )

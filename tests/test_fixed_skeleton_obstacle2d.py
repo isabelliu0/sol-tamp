@@ -36,7 +36,9 @@ def test_fixed_skill_sequence_obstacle2d():
             break
         hier_wrapper = hier_wrapper.env
 
+    # ['skill_GraphPickUpSkill', 'skill_GraphPickUpFromTargetSkill', 'skill_GraphPutDownSkill', 'skill_GraphPutDownOnTargetSkill']
     base_policies = hier_wrapper.base_policies if hasattr(hier_wrapper, 'base_policies') else []
+    # ['skill_GraphPickUpSkill', 'skill_GraphPickUpFromTargetSkill', 'skill_GraphPutDownSkill', 'skill_GraphPutDownOnTargetSkill', 'controller']
     all_policies = hier_wrapper.policies if hasattr(hier_wrapper, 'policies') else []
     print(f"  Base policies: {base_policies}")
     print(f"  All policies: {all_policies}")

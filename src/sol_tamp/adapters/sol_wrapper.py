@@ -26,6 +26,7 @@ class SOLEnvironmentWrapper(gym.Wrapper):
         reward_computer: IntrinsicRewardComputer,
         observation_encoder: Optional[Callable] = None,
         max_steps: int = 300,
+        step_penalty: float = -0.01,
     ):
         """Initialize SOL wrapper.
 
@@ -42,6 +43,7 @@ class SOLEnvironmentWrapper(gym.Wrapper):
         self.current_obs = None
         self.max_steps = max_steps
         self.step_count = 0
+        self.step_penalty = step_penalty
 
         self._setup_observation_space()
 
@@ -103,6 +105,8 @@ class SOLEnvironmentWrapper(gym.Wrapper):
         # NOTE: SLAP envs by default never truncate episodes, 
         # so we handle max_steps here
         obs, reward, terminated, _, info = self.env.step(action)
+        if not terminated:
+            reward += self.step_penalty
         self.current_obs = obs
 
         info['raw_obs'] = obs

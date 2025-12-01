@@ -93,6 +93,7 @@ class TAMPPredicateRewardComputer(IntrinsicRewardComputer):
             skill_completed = info.get("skill_completed", False)
 
             is_this_skill = skill_name.lower() in action_type.lower()
+            # NOTE: This is currently always 0.0.
             rewards[reward_name] = 1.0 if (is_this_skill and skill_completed) else 0.0
 
         return rewards

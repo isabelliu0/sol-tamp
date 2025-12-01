@@ -216,7 +216,7 @@ def make_tamp_env(
         )
 
         predefined_skills = get_predefined_skills(tamp_system, spec["skill_names"])
-        env = SkillOverrideWrapper(env, predefined_skills)
+        env = SkillOverrideWrapper(env, predefined_skills, debug=cfg.debug)
 
     return env
 

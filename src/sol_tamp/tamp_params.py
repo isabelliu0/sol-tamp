@@ -51,18 +51,24 @@ def add_tamp_env_args(env, parser):
     p.add_argument(
         "--reward_scale_shortcuts",
         type=float,
-        default=1.0,
+        default=0.00001,
         help="Scaling for shortcut option intrinsic rewards",
     )
     p.add_argument(
         "--reward_scale_skills",
         type=float,
-        default=1.0,
+        default=0.00001,
         help="Scaling for skill option intrinsic rewards",
     )
     p.add_argument(
         "--reward_scale_task",
         type=float,
-        default=10.0,
+        default=1.0,
         help="Scaling for task reward",
+    )
+    p.add_argument(
+        "--debug",
+        type=bool,
+        default=False,
+        help="if debug, the environment will always be reset to a default state"
     )

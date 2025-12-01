@@ -19,12 +19,14 @@ class SkillOverrideWrapper(gym.Wrapper):
         env: gym.Env,
         predefined_skills: Dict[str, Callable[[Any], NDArray]],
         tamp_system=None,
+        debug: bool = False,
     ):
         super().__init__(env)
         self.predefined_skills = predefined_skills
         self.tamp_system = tamp_system
         self.last_obs = None
         self.last_raw_obs = None
+        self.debug = debug
 
         if hasattr(env, 'policies'):
             for skill_name in predefined_skills.keys():
@@ -46,7 +48,10 @@ class SkillOverrideWrapper(gym.Wrapper):
         return None
 
     def reset(self, seed=None, options=None):
-        obs, info = self.env.reset(seed=seed, options=options)
+        if self.debug:
+            obs, info = self.env.reset(seed=seed, options={"reset_debug": True})
+        else:
+            obs, info = self.env.reset(seed=seed, options=options)
         self.last_obs = obs
         self.last_raw_obs = info.get('raw_obs', None)
 

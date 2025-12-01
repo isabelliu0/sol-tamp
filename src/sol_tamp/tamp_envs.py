@@ -172,7 +172,10 @@ def make_tamp_env(
         render_mode=render_mode,
     )
 
-    shortcut_specs = _load_trained_signatures(spec["system_name"], tamp_system)
+    if cfg.use_shortcuts:
+        shortcut_specs = _load_trained_signatures(spec["system_name"], tamp_system)
+    else:
+        shortcut_specs = []
 
     reward_computer = TAMPPredicateRewardComputer(
         tamp_system=tamp_system,

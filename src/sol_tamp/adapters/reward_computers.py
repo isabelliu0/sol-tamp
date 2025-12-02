@@ -42,20 +42,20 @@ class TAMPPredicateRewardComputer(IntrinsicRewardComputer):
         tamp_system,
         shortcut_specs: list[dict[str, Any]],
         skill_names: list[str],
+        grounded_skill_names: list[str] = None,
     ):
         """Initialize TAMP reward computer.
 
         Args:
             tamp_system: TAMP system instance
-            shortcut_specs: List of shortcut specifications, each with:
-                - name: reward name (e.g., 'shortcut_push_to_drawer')
-                - preconditions: list of predicate strings
-                - effects: list of predicate strings
-            skill_names: List of skill base names (e.g., ['pick', 'place'])
+            shortcut_specs: List of shortcut specifications
+            skill_names: List of skill base names (e.g., ['GraphPickUpSkill'])
+            grounded_skill_names: List of grounded skill names (e.g., ['skill_GraphPickUpSkill_robot_block1_table'])
         """
         self.tamp_system = tamp_system
         self.shortcut_specs = shortcut_specs
         self.skill_names = skill_names
+        self.grounded_skill_names = grounded_skill_names if grounded_skill_names else []
 
         self.prev_atoms = set()
         self.current_atoms = set()
@@ -87,14 +87,10 @@ class TAMPPredicateRewardComputer(IntrinsicRewardComputer):
 
         rewards["shortcut_"] = shortcut_reward
 
-        for skill_name in self.skill_names:
-            reward_name = f"skill_{skill_name}"
-            action_type = info.get("action_type", "")
-            skill_completed = info.get("skill_completed", False)
-
-            is_this_skill = skill_name.lower() in action_type.lower()
-            # NOTE: This is currently always 0.0.
-            rewards[reward_name] = 1.0 if (is_this_skill and skill_completed) else 0.0
+        # NOTE: Skill rewards are always 0.0. Controller gets sparse reward 1.0 at task completion.
+        # Each grounded skill gets its own independent reward entry
+        for grounded_skill_name in self.grounded_skill_names:
+            rewards[grounded_skill_name] = 0.0
 
         return rewards
 
@@ -107,9 +103,13 @@ class TAMPPredicateRewardComputer(IntrinsicRewardComputer):
         return True
 
     def get_reward_names(self) -> list[str]:
-        """Get all reward names (using metric names with digits removed)."""
+        """Get all reward names.
+
+        Returns list of all grounded skill names (e.g., 'skill_GraphPickUpSkill_robot_block1_table').
+        Each grounded skill is treated independently with its own reward.
+        """
         names = ["shortcut_"] if self.shortcut_specs else []
-        names.extend([f"skill_{name}" for name in self.skill_names])
+        names.extend(self.grounded_skill_names)
         return names
 
 

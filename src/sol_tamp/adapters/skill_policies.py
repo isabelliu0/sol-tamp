@@ -197,8 +197,6 @@ def get_predefined_skills(
                 policy = TAMPSkillPolicy(tamp_system, skill_name, grounding)
                 predefined_skills[grounded_skill_name] = policy
 
-            print(f"Created {len(all_groundings)} grounded policies for skill '{skill_name}'")
-
         except ValueError as e:
             print(f"Warning: {e}")
             print(f"Skipping skill '{skill_name}'")

@@ -197,7 +197,9 @@ def make_tamp_env(
             specific_groundings=specific_groundings
         )
         grounded_skill_names = list(predefined_skills.keys())
-        print(f"[make_tamp_env] Created {len(grounded_skill_names)} grounded skills")
+        print(f"[make_tamp_env] Created {len(grounded_skill_names)} grounded skills:")
+        for skill_name in grounded_skill_names:
+            print(f"  - {skill_name}")
     else:
         grounded_skill_names = []
 

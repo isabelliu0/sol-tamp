@@ -78,3 +78,15 @@ def add_tamp_env_args(env, parser):
         default=True,
         help="Whether to load and use shortcut policies (set to False for skills-only training)"
     )
+    p.add_argument(
+        "--oracle_skills_only",
+        type=str2bool,
+        default=False,
+        help="Only create 4 oracle grounded skills for obstacle2d (testing/debugging)"
+    )
+    p.add_argument(
+        "--max_episode_steps",
+        type=int,
+        default=300,
+        help="Maximum steps per episode before truncation"
+    )

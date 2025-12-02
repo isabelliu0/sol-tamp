@@ -78,7 +78,8 @@ class TAMPSkillPolicy:
 def get_predefined_skills(
     tamp_system,
     skill_names: list[str],
-    initial_obs: Any
+    initial_obs: Any,
+    specific_groundings: list[tuple[str, tuple[str, ...]]] = None
 ) -> Dict[str, Callable[[Any], NDArray]]:
     """Create predefined skill policy functions from TAMP system.
 
@@ -86,6 +87,9 @@ def get_predefined_skills(
         tamp_system: TAMP system instance
         skill_names: List of skill names (e.g., ['Grasp', 'Place', 'Reach'])
         initial_obs: Initial observation to get objects from the environment
+        specific_groundings: Optional list of (skill_name, object_names) tuples to create only specific groundings.
+                           E.g., [('GraphPickUpSkill', ('robot', 'block1', 'table')), ...]
+                           If None, creates all possible groundings.
 
     Returns:
         Dict mapping 'skill_{name}_{obj1}_{obj2}_...' to policy functions
@@ -98,7 +102,6 @@ def get_predefined_skills(
     for skill in tamp_system.skills:
         print(f"  - {skill.__class__.__name__}")
 
-    # Get objects from initial observation
     perceiver = tamp_system.perceiver
     perceiver.step(initial_obs)
     objects = perceiver._get_objects()
@@ -106,6 +109,38 @@ def get_predefined_skills(
     print(f"\nObjects in environment:")
     for obj in objects:
         print(f"  - {obj.name} ({obj.type})")
+
+    obj_by_name = {obj.name: obj for obj in objects}
+
+    if specific_groundings is not None:
+        print(f"\nUsing specific groundings (count: {len(specific_groundings)})")
+        for skill_name, obj_names in specific_groundings:
+            try:
+                skill = None
+                for s in tamp_system.skills:
+                    if s.__class__.__name__ == skill_name:
+                        skill = s
+                        break
+
+                if skill is None:
+                    available_skills = [s.__class__.__name__ for s in tamp_system.skills]
+                    raise ValueError(
+                        f"Skill '{skill_name}' not found. Available: {available_skills}"
+                    )
+
+                grounding = tuple(obj_by_name[name] for name in obj_names)
+                grounded_skill_name = f"skill_{skill_name}_{'_'.join(obj_names)}"
+
+                policy = TAMPSkillPolicy(tamp_system, skill_name, grounding)
+                predefined_skills[grounded_skill_name] = policy
+                print(f"  Created: {grounded_skill_name}")
+
+            except (ValueError, KeyError) as e:
+                print(f"Warning: Failed to create {skill_name} with {obj_names}: {e}")
+                continue
+
+        print(f"\nTotal grounded skills created: {len(predefined_skills)}")
+        return predefined_skills
 
     for skill_name in skill_names:
         try:

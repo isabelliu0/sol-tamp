@@ -179,8 +179,27 @@ def make_tamp_env(
 
     if cfg.with_sol:
         initial_obs, _ = tamp_system.env.reset()
-        predefined_skills = get_predefined_skills(tamp_system, spec["skill_names"], initial_obs)
+
+        specific_groundings = None
+        if cfg.oracle_skills_only:
+            specific_groundings = [
+                ('GraphPickUpFromTargetSkill', ('robot', 'block2', 'target_area')),
+                ('GraphPutDownSkill', ('robot', 'block2', 'table')),
+                ('GraphPickUpSkill', ('robot', 'block1', 'table')),
+                ('GraphPutDownOnTargetSkill', ('robot', 'block1', 'target_area')),
+            ]
+            print(f"[make_tamp_env] Using oracle-only skills: {specific_groundings}")
+
+        predefined_skills = get_predefined_skills(
+            tamp_system,
+            spec["skill_names"],
+            initial_obs,
+            specific_groundings=specific_groundings
+        )
         grounded_skill_names = list(predefined_skills.keys())
+        print(f"[make_tamp_env] Created {len(grounded_skill_names)} grounded skills:")
+        for skill_name in grounded_skill_names:
+            print(f"  - {skill_name}")
     else:
         grounded_skill_names = []
 
@@ -193,10 +212,12 @@ def make_tamp_env(
 
     observation_encoder = _create_observation_encoder(tamp_system.env, spec)
 
+    max_episode_steps = cfg.max_episode_steps
     env = SOLEnvironmentWrapper(
         env=tamp_system.env,
         reward_computer=reward_computer,
         observation_encoder=observation_encoder,
+        max_steps=max_episode_steps,
     )
 
     if cfg.with_sol:
@@ -212,12 +233,12 @@ def make_tamp_env(
             shortcut_name = spec_item["name"]
             base_policies.append(shortcut_name)
 
-        # Add all grounded skills to base_policies and reward_scale
         for grounded_skill_name in predefined_skills.keys():
-            # Add to base_policies with full grounded name
             base_policies.append(grounded_skill_name)
-            # Add to reward_scale with full grounded name (each grounding gets its own scale)
             reward_scale[grounded_skill_name] = cfg.reward_scale_skills
+
+        print(f"[make_tamp_env] base_policies (len={len(base_policies)}): {base_policies}")
+        print(f"[make_tamp_env] reward_scale keys: {list(reward_scale.keys())}\n")
 
         controller_reward_key = "task_reward"
 

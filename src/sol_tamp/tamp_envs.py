@@ -177,10 +177,18 @@ def make_tamp_env(
     else:
         shortcut_specs = []
 
+    if cfg.with_sol:
+        initial_obs, _ = tamp_system.env.reset()
+        predefined_skills = get_predefined_skills(tamp_system, spec["skill_names"], initial_obs)
+        grounded_skill_names = list(predefined_skills.keys())
+    else:
+        grounded_skill_names = []
+
     reward_computer = TAMPPredicateRewardComputer(
         tamp_system=tamp_system,
         shortcut_specs=shortcut_specs,
         skill_names=spec["skill_names"],
+        grounded_skill_names=grounded_skill_names,
     )
 
     observation_encoder = _create_observation_encoder(tamp_system.env, spec)
@@ -192,9 +200,6 @@ def make_tamp_env(
     )
 
     if cfg.with_sol:
-        # Get initial observation to enumerate objects for grounded skills
-        initial_obs, _ = tamp_system.env.reset()
-        predefined_skills = get_predefined_skills(tamp_system, spec["skill_names"], initial_obs)
 
         reward_scale = {
             "task_reward": cfg.reward_scale_task,

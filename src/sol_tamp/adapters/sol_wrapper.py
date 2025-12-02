@@ -26,7 +26,7 @@ class SOLEnvironmentWrapper(gym.Wrapper):
         reward_computer: IntrinsicRewardComputer,
         observation_encoder: Optional[Callable] = None,
         max_steps: int = 300,
-        step_penalty: float = -0.01,
+        step_penalty: float = -0.001,
     ):
         """Initialize SOL wrapper.
 

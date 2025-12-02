@@ -90,12 +90,7 @@ slap_data/
 Train SOL on obstacle2d:
 
 ```bash
-python experiments/train_tamp.py \
-    --env=tamp_obstacle2d \
-    --experiment=my_experiment \
-    --with_sol=True \
-    --sol_num_option_steps=50 \
-    --exploration_loss_coeff=0.0001
+python experiments/train_tamp.py --env=tamp_obstacle2d --experiment=obstacle2d_run_debug_sequence --with_sol=True --sol_num_option_steps=50 --exploration_loss_coeff=0.0001
 ```
 
 **Key parameters:**

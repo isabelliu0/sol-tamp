@@ -42,6 +42,13 @@ class SkillOverrideWrapper(gym.Wrapper):
         return None
 
     @property
+    def base_policies(self):
+        """Pass through base_policies attribute from wrapped environment."""
+        if hasattr(self.env, 'base_policies'):
+            return self.env.base_policies
+        return None
+
+    @property
     def current_policy(self):
         """Pass through current_policy attribute from wrapped environment."""
         if hasattr(self.env, 'current_policy'):

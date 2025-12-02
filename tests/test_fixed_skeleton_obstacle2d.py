@@ -54,10 +54,10 @@ def test_fixed_skill_sequence_obstacle2d():
     print(f"    {depth}: {type(temp_env).__name__} (base)")
 
     skill_sequence = [
-        "skill_GraphPickUpFromTargetSkill",
-        "skill_GraphPutDownSkill",
-        "skill_GraphPickUpSkill",
-        "skill_GraphPutDownOnTargetSkill",
+        "skill_GraphPickUpFromTargetSkill_robot_block2_target_area",
+        "skill_GraphPutDownSkill_robot_block2_table",
+        "skill_GraphPickUpSkill_robot_block1_table",
+        "skill_GraphPutDownOnTargetSkill_robot_block1_target_area",
     ]
 
     print(f"\n  Target skill sequence: {skill_sequence}")

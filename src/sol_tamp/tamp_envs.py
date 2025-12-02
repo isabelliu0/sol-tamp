@@ -192,6 +192,10 @@ def make_tamp_env(
     )
 
     if cfg.with_sol:
+        # Get initial observation to enumerate objects for grounded skills
+        initial_obs, _ = tamp_system.env.reset()
+        predefined_skills = get_predefined_skills(tamp_system, spec["skill_names"], initial_obs)
+
         reward_scale = {
             "task_reward": cfg.reward_scale_task,
             "controller": 1.0,
@@ -203,10 +207,12 @@ def make_tamp_env(
             shortcut_name = spec_item["name"]
             base_policies.append(shortcut_name)
 
-        for skill_name in spec["skill_names"]:
-            skill_policy_name = f"skill_{skill_name}"
-            reward_scale[skill_policy_name] = cfg.reward_scale_skills
-            base_policies.append(skill_policy_name)
+        # Add all grounded skills to base_policies and reward_scale
+        for grounded_skill_name in predefined_skills.keys():
+            # Add to base_policies with full grounded name
+            base_policies.append(grounded_skill_name)
+            # Add to reward_scale with full grounded name (each grounding gets its own scale)
+            reward_scale[grounded_skill_name] = cfg.reward_scale_skills
 
         controller_reward_key = "task_reward"
 
@@ -218,7 +224,6 @@ def make_tamp_env(
             cfg.sol_num_option_steps,
         )
 
-        predefined_skills = get_predefined_skills(tamp_system, spec["skill_names"])
         env = SkillOverrideWrapper(env, predefined_skills, debug=cfg.debug)
 
     return env

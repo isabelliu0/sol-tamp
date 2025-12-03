@@ -87,6 +87,6 @@ def add_tamp_env_args(env, parser):
     p.add_argument(
         "--max_episode_steps",
         type=int,
-        default=300,
+        default=100,
         help="Maximum steps per episode before truncation"
     )

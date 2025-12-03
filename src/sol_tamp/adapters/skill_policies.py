@@ -40,24 +40,35 @@ class TAMPSkillPolicy:
         perceiver = self.tamp_system.perceiver
         current_atoms = perceiver.step(obs)
 
-        # Get operator name from skill's _get_operator_name() method
-        operator_name = self.skill._get_operator_name()
-
-        for operator in self.tamp_system.operators:
-            if operator.name == operator_name:
-                # Check if the specific grounding is valid
-                if not self._is_grounding_valid(operator, self.grounding, current_atoms):
-                    self.is_initialized = False
-                    return
-
-                ground_op = operator.ground(self.grounding)
-                self.skill.reset(ground_op)
-                self.current_operator = ground_op
-                self.is_initialized = True
+        # Get operator - support both PyBullet and obstacle2d skill interfaces
+        if hasattr(self.skill, '_get_lifted_operator'):
+            operator = self.skill._get_lifted_operator()
+        elif hasattr(self.skill, '_get_operator_name'):
+            operator_name = self.skill._get_operator_name()
+            operator = None
+            for op in self.tamp_system.operators:
+                if op.name == operator_name:
+                    operator = op
+                    break
+            if operator is None:
+                print(f"[{self.skill_name}] No matching operator found for name: {operator_name}")
+                self.is_initialized = False
                 return
+        else:
+            raise AttributeError(
+                f"Skill '{self.skill_name}' must have either _get_lifted_operator() "
+                "or _get_operator_name() method"
+            )
 
-        print(f"[{self.skill_name}] No matching operator found for name: {operator_name}")
-        self.is_initialized = False
+        # Check if the specific grounding is valid
+        if not self._is_grounding_valid(operator, self.grounding, current_atoms):
+            self.is_initialized = False
+            return
+
+        ground_op = operator.ground(self.grounding)
+        self.skill.reset(ground_op)
+        self.current_operator = ground_op
+        self.is_initialized = True
 
     def _is_grounding_valid(self, operator, grounding, current_atoms):
         """Check if a specific grounding satisfies the operator's preconditions."""
@@ -158,20 +169,21 @@ def get_predefined_skills(
                     f"Available skills: {available_skills}"
                 )
 
-            # Find the operator for this skill
-            if not hasattr(skill, '_get_operator_name'):
-                print(f"Warning: Skill '{skill_name}' does not have _get_operator_name() method. Skipping.")
-                continue
-
-            operator_name = skill._get_operator_name()
-            operator = None
-            for op in tamp_system.operators:
-                if op.name == operator_name:
-                    operator = op
-                    break
-
-            if operator is None:
-                print(f"Warning: No operator found for skill '{skill_name}' (operator: {operator_name})")
+            # Get operator - support both PyBullet and obstacle2d interfaces
+            if hasattr(skill, '_get_lifted_operator'):
+                operator = skill._get_lifted_operator()
+            elif hasattr(skill, '_get_operator_name'):
+                operator_name = skill._get_operator_name()
+                operator = None
+                for op in tamp_system.operators:
+                    if op.name == operator_name:
+                        operator = op
+                        break
+                if operator is None:
+                    print(f"Warning: No operator found for skill '{skill_name}' (operator: {operator_name})")
+                    continue
+            else:
+                print(f"Warning: Skill '{skill_name}' has neither _get_lifted_operator() nor _get_operator_name(). Skipping.")
                 continue
 
             # Generate all possible groundings for this operator

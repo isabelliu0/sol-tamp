@@ -92,12 +92,24 @@ TAMP_ENV_SPECS = {
     "obstacle_tower": {
         "system_class": GraphObstacleTowerTAMPSystem,
         "system_name": "GraphObstacleTowerTAMPSystem",
-        "skill_names": ["Grasp", "Place", "Reach"],
+        "skill_names": [
+            "PickSkill",
+            "PickFromTargetSkill",
+            "PlaceSkill",
+            "PlaceInTargetSkill",
+            "UnstackSkill",
+            "StackSkill",
+        ],
     },
     "cleanup_table": {
         "system_class": CleanupTableTAMPSystem,
         "system_name": "CleanupTableTAMPSystem",
-        "skill_names": ["Grasp", "Place", "Reach"],
+        "skill_names": [
+            "ReachObjaverseSkill",
+            "GraspObjaverseSkill",
+            "DropSkill",
+            "LiftSkill",
+        ],
     },
     "obstacle2d": {
         "system_class": GraphObstacle2DTAMPSystem,

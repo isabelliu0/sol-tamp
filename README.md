@@ -96,8 +96,7 @@ python experiments/train_tamp.py \
     --with_sol=True \
     --sol_num_option_steps=50 \
     --exploration_loss_coeff=0.0001 \
-    --use_shortcuts=True \
-    
+    --use_shortcuts=True
 ```
 
 **Key parameters:**

@@ -90,16 +90,22 @@ slap_data/
 Train SOL on obstacle2d:
 
 ```bash
-python experiments/train_tamp.py --env=tamp_obstacle2d --experiment=obstacle2d_run_debug_sequence --with_sol=True --sol_num_option_steps=50 --exploration_loss_coeff=0.0001
+python experiments/train_tamp.py \
+    --env=tamp_obstacle2d \
+    --experiment=obstacle2d_run \
+    --with_sol=True \
+    --sol_num_option_steps=50 \
+    --exploration_loss_coeff=0.0001 \
+    --use_shortcuts=True
 ```
 
 **Key parameters:**
 
 - `--with_sol=True` (default): Enable hierarchical SOL learning
 - `--sol_num_option_steps=50` (default): Steps per option
-- `--reward_scale_shortcuts=1.0`: Shortcut reward scaling
-- `--reward_scale_skills=1.0`: Skill reward scaling
-- `--reward_scale_task=10.0`: Task completion scaling
+- `--reward_scale_shortcuts=0.00001`: Shortcut reward scaling
+- `--reward_scale_skills=0.00001`: Skill reward scaling
+- `--reward_scale_task=1.0`: Task completion scaling
 
 ### Evaluation
 
@@ -109,7 +115,7 @@ Evaluate trained policy and save video:
 # Evaluate with video recording (recommended)
 python experiments/enjoy_tamp.py \
     --env=tamp_obstacle2d \
-    --experiment=my_experiment \
+    --experiment=obstacle2d_run \
     --save_video \
     --video_name=obstacle2d_demo \
     --max_num_episodes=5
@@ -117,7 +123,7 @@ python experiments/enjoy_tamp.py \
 # Evaluate without rendering (faster)
 python experiments/enjoy_tamp.py \
     --env=tamp_obstacle2d \
-    --experiment=my_experiment \
+    --experiment=obstacle2d_run \
     --no_render \
     --max_num_episodes=20
 ```

@@ -16,7 +16,7 @@ dependencies = [
     "hydra-core>=1.3.0",
     "omegaconf>=2.3.0",
     "huggingface_hub<0.20",
-    "tamp_improv@git+https://github.com/isabelliu0/tamp_physical_improvisation@62b845c",
+    "sample-factory>=2.1.0",
 ]
 
 [project.optional-dependencies]

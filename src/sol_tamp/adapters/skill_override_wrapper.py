@@ -5,6 +5,10 @@ import gymnasium as gym
 import numpy as np
 from numpy.typing import NDArray
 
+from skill_refactor.adapters.sol_adapter.skill_policies import (
+    SkillRefactorSkillPolicy,
+)
+
 
 class SkillOverrideWrapper(gym.Wrapper):
     """Overrides actions for predefined skills while allowing shortcuts to be learned.
@@ -71,7 +75,7 @@ class SkillOverrideWrapper(gym.Wrapper):
             current_policy_name = self.env.current_policy
 
             if current_policy_name in self.predefined_skills and current_policy_name != 'controller':
-                skill_policy = self.predefined_skills[current_policy_name]
+                skill_policy: SkillRefactorSkillPolicy = self.predefined_skills[current_policy_name]
 
                 if current_policy_name != self.last_policy:
                     skill_policy.is_initialized = False
@@ -81,6 +85,7 @@ class SkillOverrideWrapper(gym.Wrapper):
 
                 try:
                     predefined_action = skill_policy(skill_obs)
+                    terminated = skill_policy.skill_terminated(skill_obs)
                     print(f"[SkillOverrideWrapper] Got predefined_action from skill, is_zero={np.allclose(predefined_action, 0.0)}")
 
                     # Convert to list for HierarchicalWrapper compatibility

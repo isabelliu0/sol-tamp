@@ -107,7 +107,9 @@ def get_predefined_skills(
     """
     from itertools import product
 
-    predefined_skills = {}
+    predefined_skills = {
+        'terminate': None, # Special skill to signal termination
+    }
 
     print(f"\nAvailable skills in TAMP system:")
     for skill in tamp_system.skills:

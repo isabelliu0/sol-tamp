@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 from skill_refactor.adapters.sol_adapter.skill_policies import (
     SkillRefactorSkillPolicy,
 )
+from skill_refactor import SOL_TERMINATE_ACTION
 
 
 class SkillOverrideWrapper(gym.Wrapper):
@@ -95,6 +96,9 @@ class SkillOverrideWrapper(gym.Wrapper):
                         action = list(action) if not isinstance(action, list) else action
                         action[0] = predefined_action
                     print(f"[SkillOverrideWrapper] Passing action[0] (is_zero={np.allclose(action[0], 0.0)}) to HierarchicalWrapper")
+                    if terminated:
+                        print(f"[SkillOverrideWrapper] Skill {current_policy_name} terminated successfully.")
+                        action[-1] = SOL_TERMINATE_ACTION
 
                 except (AssertionError, ValueError, RuntimeError, IndexError) as e:
                     # IndexError: PyBullet skills raise this when motion plan is exhausted

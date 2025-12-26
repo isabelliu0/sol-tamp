@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 
 from sol_tamp.adapters.reward_computers import IntrinsicRewardComputer
 from sol_tamp.adapters.observation_encoder import ObservationEncoder
+from skill_refactor.settings import CFG
 
 
 class SOLEnvironmentWrapper(gym.Wrapper):
@@ -25,7 +26,6 @@ class SOLEnvironmentWrapper(gym.Wrapper):
         env: gym.Env,
         reward_computer: IntrinsicRewardComputer,
         observation_encoder: Optional[Callable] = None,
-        max_steps: int = 300,
         step_penalty: float = -0.001,
     ):
         """Initialize SOL wrapper.
@@ -41,7 +41,7 @@ class SOLEnvironmentWrapper(gym.Wrapper):
 
         self.prev_obs = None
         self.current_obs = None
-        self.max_steps = max_steps
+        self.max_steps = CFG.max_env_steps
         self.step_count = 0
         self.step_penalty = step_penalty
 

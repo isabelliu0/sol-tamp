@@ -87,7 +87,6 @@ class SkillOverrideWrapper(gym.Wrapper):
                 try:
                     predefined_action = skill_policy(skill_obs)
                     terminated = skill_policy.skill_terminated(skill_obs)
-                    print(f"[SkillOverrideWrapper] Got predefined_action from skill, is_zero={np.allclose(predefined_action, 0.0)}")
 
                     # Convert to list for HierarchicalWrapper compatibility
                     if isinstance(action, tuple):
@@ -95,9 +94,7 @@ class SkillOverrideWrapper(gym.Wrapper):
                     else:
                         action = list(action) if not isinstance(action, list) else action
                         action[0] = predefined_action
-                    print(f"[SkillOverrideWrapper] Passing action[0] (is_zero={np.allclose(action[0], 0.0)}) to HierarchicalWrapper")
                     if terminated:
-                        print(f"[SkillOverrideWrapper] Skill {current_policy_name} terminated successfully.")
                         action[-1] = SOL_TERMINATE_ACTION
 
                 except (AssertionError, ValueError, RuntimeError, IndexError) as e:

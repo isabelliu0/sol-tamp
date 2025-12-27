@@ -172,4 +172,4 @@ cython_debug/
 slap_data
 train_dir
 videos
-.vscode/
+.vscode/third-party/sol
